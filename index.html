@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pecahan Senilai - Toko Kue Nusantara</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS","Segoe UI",Arial,sans-serif;background:linear-gradient(#fff0b8,#ffc9c9);min-height:100vh;color:#3b2a20}
+#app{max-width:780px;margin:0 auto;padding:12px}
+.card{background:#fff;border-radius:22px;padding:18px;box-shadow:0 6px 0 #0002;margin-bottom:12px}
+h1{margin:0 0 8px;font-size:2.1rem;color:#d9480f}h2{margin:4px 0 8px}
+.btn{font:inherit;font-weight:800;font-size:1.05rem;border:0;border-radius:16px;padding:12px 18px;margin:4px;background:#ff7a3d;color:#fff;box-shadow:0 4px 0 #b9480f;cursor:pointer;touch-action:manipulation}
+.btn.g{background:#2fb36b;box-shadow:0 4px 0 #1c7a47}.btn.b{background:#4a90e2;box-shadow:0 4px 0 #2a62a8}
+.btn:active{transform:translateY(3px)}.btn:disabled{background:#bbb;box-shadow:0 4px 0 #888;cursor:not-allowed}
+.btn:focus-visible,.opt:focus-visible{outline:4px solid #4a90e2}
+.hud{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;font-weight:800;margin-bottom:10px}
+.hud span{background:#fff;border-radius:12px;padding:6px 10px;box-shadow:0 3px 0 #0002}
+.fr{display:inline-flex;flex-direction:column;align-items:center;font-weight:800;vertical-align:middle;margin:0 5px;line-height:1.25}
+.fr i{font-style:normal;padding:0 5px;min-width:1.4em;text-align:center}.fr i:first-child{border-bottom:3px solid currentColor}
+.q{font-size:1.15rem;line-height:1.5}
+.bar{display:flex;gap:3px;margin:6px 0}.bar b{flex:1;height:46px;border:3px solid #8a5a2b;border-radius:8px;background:#fff5dc}
+.bar b.on{background:#ff9f43}#bar b{cursor:pointer}
+.opts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.opt{font:inherit;font-size:1.25rem;font-weight:800;background:#fff7e0;border:3px solid #e0b36b;border-radius:14px;padding:10px 16px;min-width:84px;cursor:pointer;color:inherit;touch-action:manipulation}
+.opt.sel{background:#ffd27a;border-color:#ff7a3d}.opt.ok{background:#b9f0cc;border-color:#2fb36b;cursor:default}
+.fb{padding:10px 12px;border-radius:14px;margin:10px 0;font-weight:700;line-height:1.5}
+.fb.ok{background:#d6f7e2}.fb.no{background:#ffe0e0}.fb.hint{background:#e3efff}
+.bask{flex:1;min-width:150px;border:3px dashed #4a90e2;border-radius:16px;padding:8px;min-height:100px;text-align:center;cursor:pointer;background:#f2f8ff}
+.bask .opt{font-size:1rem;min-width:0;padding:4px 8px;cursor:default}
+input[type=number]{width:70px;font:inherit;font-size:1.3rem;text-align:center;border:3px solid #4a90e2;border-radius:10px;padding:4px}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.map .btn{margin:0;padding:10px 8px;font-size:.95rem}
+.big{font-size:3rem;text-align:center}.sm{font-size:.9rem;color:#6b5a50}
+.ach{display:inline-block;background:#fff3c4;border-radius:12px;padding:4px 10px;margin:3px;font-weight:700}.ach.off{opacity:.4}
+@media(prefers-reduced-motion:no-preference){.pop{animation:pop .35s}@keyframes pop{from{transform:scale(.9);opacity:.4}}}
+</style></head><body><div id="app"></div>
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const fr=(a,b)=>`<span class="fr"><i>${a}</i><i>${b}</i></span>`, f=fr;
+const eq=(a,b,c,d)=>a*d===b*c;
+const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const DEF={u:1,st:{},coin:0,ach:{},mute:false,best:{}};
+function load(){try{return Object.assign({},DEF,JSON.parse(localStorage.getItem('pecahanSenilai')||'{}'))}catch(e){return Object.assign({},DEF)}}
+function save(){try{localStorage.setItem('pecahanSenilai',JSON.stringify(S))}catch(e){}}
+let S=load(),G=null,AC;
+function snd(t){if(S.mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();
+ const q={ok:[[523,.1],[659,.1],[784,.15]],no:[[260,.18],[220,.18]],win:[[523,.12],[659,.12],[784,.12],[1047,.35]],tap:[[440,.05]]}[t];let tm=AC.currentTime;
+ q.forEach(([fq,d])=>{const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=fq;g.gain.setValueAtTime(.15,tm);g.gain.exponentialRampToValueAtTime(.001,tm+d);o.connect(g);g.connect(AC.destination);o.start(tm);o.stop(tm+d);tm+=d})}catch(e){}}
+
+/* ===== DATA LEVEL ===== */
+const L=[
+{n:'Roti Belah Dua',g:'Mengenali bahwa pecahan yang berbeda bisa menunjukkan bagian yang sama besar.',s:'Pak Budi membuka Toko Kue Nusantara. Bantu ia mewarnai roti agar sama besar dengan contoh!',r:[{t:'shade',a:1,b:2,n:4},{t:'shade',a:1,b:2,n:6},{t:'shade',a:1,b:4,n:8}]},
+{n:'Roti Lebih Banyak Irisan',g:'Mengubah pecahan ke pecahan senilai dengan gambar.',s:'Pelanggan minta roti dipotong lebih kecil, tetapi jumlah rotinya harus tetap sama.',r:[{t:'shade',a:2,b:3,n:6},{t:'shade',a:3,b:4,n:8},{t:'shade',a:2,b:5,n:10},{t:'shade',a:1,b:3,n:9}]},
+{n:'Pilih yang Senilai',g:'Memilih semua pecahan yang senilai.',s:'Rak kue tercampur! Pilih semua kue yang bertanda pecahan senilai.',r:[{t:'multi',a:1,b:2,o:[[2,4],[3,6],[2,3],[4,8],[3,5]]},{t:'multi',a:1,b:3,o:[[2,6],[3,9],[1,6],[4,12],[2,9]]},{t:'multi',a:3,b:4,o:[[6,8],[9,12],[3,8],[4,6],[12,16]]}]},
+{n:'Kartu Pasangan',g:'Memasangkan pecahan yang senilai.',s:'Cocokkan kartu pesanan yang nilainya sama agar kue tidak tertukar.',r:[{t:'match',p:[[1,2],[2,4],[1,3],[2,6],[3,4],[6,8]]},{t:'match',p:[[1,2],[3,6],[2,3],[4,6],[1,4],[2,8],[3,5],[6,10]]},{t:'match',p:[[2,5],[4,10],[5,6],[10,12],[1,5],[2,10]]}]},
+{n:'Pembilang Hilang',g:'Mencari pembilang pada pecahan senilai.',s:'Tinta label kue luntur. Isi pembilang yang hilang!',r:[{t:'fill',a:1,b:2,c:null,d:6},{t:'fill',a:2,b:3,c:null,d:9},{t:'fill',a:3,b:5,c:null,d:10},{t:'fill',a:1,b:4,c:null,d:12}]},
+{n:'Penyebut Hilang',g:'Mencari penyebut pada pecahan senilai.',s:'Sekarang penyebut pada label yang hilang. Cari dengan teliti!',r:[{t:'fill',a:3,b:4,c:9,d:null},{t:'fill',a:2,b:5,c:6,d:null},{t:'fill',a:5,b:6,c:10,d:null},{t:'fill',a:1,b:3,c:5,d:null}]},
+{n:'Keranjang Kue',g:'Mengelompokkan pecahan berdasarkan nilainya.',s:'Masukkan setiap kue ke keranjang yang nilainya sama. Pilih kue, lalu pilih keranjangnya.',r:[{t:'group',k:[[1,2],[2,3]],o:[[3,6],[4,6],[2,4],[6,9],[4,8],[8,12]]},{t:'group',k:[[1,4],[3,4]],o:[[2,8],[6,8],[3,12],[9,12],[4,16],[12,16]]}]},
+{n:'Bentuk Sederhana',g:'Menyederhanakan pecahan menjadi pecahan senilai paling sederhana.',s:'Resep Pak Budi harus ditulis paling ringkas. Pilih bentuk paling sederhana!',r:[
+ {t:'choice',q:`Sederhanakan ${f(4,8)} menjadi bentuk paling sederhana.`,o:[f(2,4),f(1,2),f(1,4)],c:1,e:`${f(4,8)} dibagi 4 di atas dan di bawah menjadi ${f(1,2)}. Angkanya tidak bisa dibagi lagi.`,h:'Cari bilangan yang bisa membagi 4 dan 8.'},
+ {t:'choice',q:`Sederhanakan ${f(6,9)}.`,o:[f(2,3),f(3,6),f(3,9)],c:0,e:`6 ÷ 3 = 2 dan 9 ÷ 3 = 3, jadi ${f(6,9)} = ${f(2,3)}.`,h:'6 dan 9 sama-sama bisa dibagi 3.'},
+ {t:'choice',q:`Sederhanakan ${f(8,12)}.`,o:[f(4,6),f(1,2),f(2,3)],c:2,e:`8 ÷ 4 = 2 dan 12 ÷ 4 = 3, jadi ${f(8,12)} = ${f(2,3)}. ${f(4,6)} senilai, tetapi masih bisa disederhanakan.`,h:'Gunakan pembagi terbesar yang bisa membagi 8 dan 12.'},
+ {t:'choice',q:`Sederhanakan ${f(10,15)}.`,o:[f(5,10),f(2,3),f(5,7)],c:1,e:`10 ÷ 5 = 2 dan 15 ÷ 5 = 3, jadi ${f(10,15)} = ${f(2,3)}.`,h:'10 dan 15 sama-sama bisa dibagi 5.'}]},
+{n:'Cerita di Dapur',g:'Menggunakan pecahan senilai untuk menyelesaikan masalah sehari-hari.',s:'Dapur Pak Budi penuh soal cerita. Baca baik-baik, lalu pilih jawabannya.',r:[
+ {t:'choice',q:`Ibu memakai ${f(1,2)} kg tepung. Timbangan hanya memiliki tanda perdelapan. Berapa tanda yang harus ditunjuk?`,o:[f(2,8),f(4,8),f(3,8)],c:1,e:`${f(1,2)} = ${f(4,8)} karena pembilang dan penyebut dikali 4.`},
+ {t:'choice',q:`Ani makan ${f(2,6)} pizza dan Budi makan ${f(1,3)} pizza. Siapa yang makan lebih banyak?`,o:['Ani','Budi','Sama banyak'],c:2,e:`${f(2,6)} dibagi 2 menjadi ${f(1,3)}. Nilainya sama, jadi mereka makan sama banyak.`},
+ {t:'choice',q:`Resep butuh ${f(3,4)} gelas susu. Gelas takar hanya bertanda per dua belas. Berapa tandanya?`,o:[f(6,12),f(9,12),f(8,12)],c:1,e:`${f(3,4)} = ${f(9,12)} karena 3 × 3 = 9 dan 4 × 3 = 12.`},
+ {t:'choice',q:`Pita kue panjangnya ${f(2,5)} meter. Berapa panjangnya jika ditulis per sepuluh?`,o:[f(2,10),f(4,10),f(5,10)],c:1,e:`${f(2,5)} = ${f(4,10)} karena pembilang dan penyebut dikali 2.`}]},
+{n:'Kontes Kue Nusantara',g:'Menerapkan semua konsep pecahan senilai.',s:'Ini kontes besar! Tantangan dari semua level muncul sekaligus. Kamu pasti bisa!',r:[{t:'shade',a:3,b:5,n:10},{t:'fill',a:2,b:3,c:null,d:12},{t:'multi',a:2,b:5,o:[[4,10],[6,15],[2,10],[8,20],[3,5]]},
+ {t:'choice',q:`Mana yang <b>tidak</b> senilai dengan ${f(3,4)}?`,o:[f(6,8),f(9,12),f(12,16),f(8,12)],c:3,e:`${f(8,12)} = ${f(2,3)}, bukan ${f(3,4)}. Pecahan lainnya senilai ${f(3,4)}.`,h:'Sederhanakan setiap pilihan, lalu bandingkan dengan 3/4.'},
+ {t:'match',p:[[1,3],[4,12],[5,8],[10,16],[3,10],[6,20],[7,9],[14,18]]}]}
+];
+const ACH=[['first','🥇 Langkah Pertama','Selesaikan level 1'],['star3','⭐ Tanpa Salah','Raih 3 bintang di satu level'],['combo','🔥 Combo 5','Jawab 5 tantangan benar berturut-turut'],['coin','🪙 Kolektor Koin','Kumpulkan 50 koin'],['champ','🏆 Juara Pecahan','Selesaikan level 10']];
+
+/* ===== LAYAR ===== */
+const show=h=>{$('#app').innerHTML=`<div class="pop">${h}</div>`};
+const mute=()=>`<button class="btn b" onclick="S.mute=!S.mute;save();map()">${S.mute?'🔇 Suara mati':'🔊 Suara nyala'}</button>`;
+function home(){show(`<div class="card"><h1>🍰 Pecahan Senilai</h1><p class="q">Selamat datang di <b>Toko Kue Nusantara</b>! Bantu Pak Budi membuat, memilih, dan mencocokkan kue dengan pecahan yang <b>senilai</b>. Ada 10 level seru untuk kelas 5.</p>
+<p class="sm">Pecahan senilai adalah pecahan yang tampilannya berbeda tetapi nilainya sama, misalnya ${f(1,2)} = ${f(2,4)}.</p><button class="btn g" onclick="map()">▶ Main</button></div>`)}
+function map(){const stars=i=>S.st[i]?'⭐'.repeat(S.st[i]):'';
+ show(`<div class="card"><h2>Peta Level</h2><p class="sm">🪙 Koin: ${S.coin}. Selesaikan level untuk membuka level berikutnya.</p><div class="map">${L.map((l,i)=>`<button class="btn ${S.st[i]?'g':''}" ${i<S.u?'':'disabled'} onclick="intro(${i})">${i<S.u?i+1:'🔒'}. ${l.n}<br>${stars(i)}</button>`).join('')}</div></div>
+ <div class="card"><h2>Penghargaan</h2>${ACH.map(a=>`<span class="ach ${S.ach[a[0]]?'':'off'}" title="${a[2]}">${a[1]}</span>`).join('')}<p class="sm">Arahkan kursor untuk melihat syaratnya.</p></div>
+ <div>${mute()}<button class="btn" onclick="home()">🏠 Beranda</button><button class="btn" onclick="if(confirm('Hapus semua progres?')){S=Object.assign({},DEF,{st:{},ach:{},best:{}});save();map()}">↺ Reset</button></div>`)}
+function intro(i){G={lv:i,r:0,miss:0,score:0,streak:G?G.streak:0,maxStreak:0};G.streak=0;const l=L[i];
+ show(`<div class="card"><h2>Level ${i+1}: ${l.n}</h2><p class="q">📖 ${l.s}</p><p><b>Tujuan:</b> ${l.g}</p><p class="sm">Syarat selesai: kerjakan ${l.r.length} tantangan sampai benar. Bintang dihitung dari banyaknya kesalahan. Salah itu boleh, kamu bisa mencoba lagi!</p><button class="btn g" onclick="rnd()">Mulai!</button><button class="btn b" onclick="map()">Peta</button></div>`)}
+
+/* ===== TANTANGAN ===== */
+const ans=d=>d.c==null?d.a*d.d/d.b:d.b*d.c/d.a;
+function rnd(){const d=L[G.lv].r[G.r];G.d=d;G.w=0;G.h=false;G.fin=false;G.msg='';
+ const R=G.R={s:new Set(),sel:null,ok:new Set(),pl:{},v:''};
+ if(d.t==='match')R.c=shuf(d.p.slice());
+ if(d.t==='group')R.o=shuf(d.o.slice());
+ draw()}
+function draw(){const d=G.d,R=G.R,lv=L[G.lv],tot=lv.r.length;let b='',chk=true;
+ if(d.t==='shade'){b=`<p class="q">Roti dipotong menjadi ${d.n} bagian sama besar. Warnai bagian yang <b>senilai</b> dengan ${f(d.a,d.b)}.</p><p class="sm">Contoh ${d.a} dari ${d.b} bagian:</p>${bar(d.b,d.a)}<p class="sm">Rotimu (klik bagian untuk mewarnai):</p><div class="bar" id="bar">${[...Array(d.n)].map((_,i)=>`<b class="${R.s.has(i)?'on':''}" onclick="tg(${i})"></b>`).join('')}</div>`}
+ else if(d.t==='multi'){b=`<p class="q">Pilih <b>semua</b> pecahan yang senilai dengan ${f(d.a,d.b)}.</p><div class="opts">${d.o.map((x,i)=>`<button class="opt ${R.s.has(i)?'sel':''}" onclick="tg(${i})">${f(x[0],x[1])}</button>`).join('')}</div>`}
+ else if(d.t==='fill'){const inp=`<input type="number" id="in" min="1" inputmode="numeric" value="${R.v}" oninput="G.R.v=this.value" onkeydown="if(event.key==='Enter')chk()">`;
+  b=`<p class="q">Lengkapi pecahan senilai berikut.</p><div style="font-size:1.8rem">${f(d.a,d.b)} = ${f(d.c==null?inp:d.c,d.d==null?inp:d.d)}</div>`}
+ else if(d.t==='choice'){b=`<p class="q">${d.q}</p><div class="opts">${d.o.map((x,i)=>`<button class="opt ${R.s.has(i)?'sel':''}" onclick="G.R.s=new Set([${i}]);snd('tap');draw()">${x}</button>`).join('')}</div>`}
+ else if(d.t==='match'){chk=false;b=`<p class="q">Sentuh dua kartu yang <b>senilai</b>.</p><div class="opts">${R.c.map((x,i)=>`<button class="opt ${R.ok.has(i)?'ok':R.sel===i?'sel':''}" onclick="mt(${i})">${f(x[0],x[1])}</button>`).join('')}</div>`}
+ else if(d.t==='group'){chk=false;const pool=R.o.map((x,i)=>R.pl[i]==null?`<button class="opt ${R.sel===i?'sel':''}" onclick="G.R.sel=${i};snd('tap');draw()">${f(x[0],x[1])}</button>`:'').join('');
+  b=`<p class="q">Pilih satu kue, lalu sentuh keranjang yang nilainya sama.</p><div class="opts">${d.k.map((k,j)=>`<div class="bask" onclick="bk(${j})"><div>Senilai ${f(k[0],k[1])}</div>${R.o.map((x,i)=>R.pl[i]===j?`<span class="opt ok">${x[0]}/${x[1]}</span>`:'').join('')}</div>`).join('')}</div><p class="opts">${pool||'✅ Semua kue sudah masuk keranjang!'}</p>`}
+ show(`<div class="hud"><span>Level ${G.lv+1}</span><span>Tantangan ${G.r+1}/${tot}</span><span>⭐ ${G.score}</span><span>🪙 ${S.coin}</span><span>🔥 ${G.streak}</span></div>
+ <div class="card">${b}${G.msg}<div>${G.fin?`<button class="btn g" onclick="next()">Lanjut ➜</button>`:`${chk?'<button class="btn g" onclick="chk()">✔ Periksa</button>':''}<button class="btn b" onclick="hnt()">💡 Petunjuk</button>`}<button class="btn" onclick="map()">Peta</button></div></div>`)}
+const bar=(n,k)=>`<div class="bar">${[...Array(n)].map((_,i)=>`<b class="${i<k?'on':''}"></b>`).join('')}</div>`;
+function tg(i){if(G.fin)return;const s=G.R.s;s.has(i)?s.delete(i):s.add(i);snd('tap');draw()}
+function mt(i){if(G.fin||G.R.ok.has(i))return;const R=G.R,c=R.c;snd('tap');
+ if(R.sel==null){R.sel=i;return draw()}
+ if(R.sel===i){R.sel=null;return draw()}
+ const x=c[R.sel],y=c[i];
+ if(eq(x[0],x[1],y[0],y[1])){R.ok.add(R.sel);R.ok.add(i);R.sel=null;snd('ok');G.msg=`<div class="fb ok">👍 ${f(x[0],x[1])} = ${f(y[0],y[1])}</div>`;
+  if(R.ok.size===c.length)return win('Semua pasangan sudah senilai. Hebat!');draw()}
+ else{R.sel=null;bad(`${f(x[0],x[1])} dan ${f(y[0],y[1])} tidak senilai. Coba pasangan lain.`)}}
+function bk(j){if(G.fin)return;const R=G.R;if(R.sel==null){G.msg='<div class="fb hint">Pilih satu kue dulu.</div>';return draw()}
+ const x=R.o[R.sel],k=G.d.k[j];
+ if(eq(x[0],x[1],k[0],k[1])){R.pl[R.sel]=j;R.sel=null;snd('ok');G.msg='';
+  if(Object.keys(R.pl).length===R.o.length)return win('Semua pecahan masuk ke keranjang yang nilainya sama.');draw()}
+ else bad(`${f(x[0],x[1])} belum senilai dengan ${f(k[0],k[1])}. Coba sederhanakan atau kalikan dulu.`)}
+function chk(){if(G.fin)return;const d=G.d,R=G.R;let ok=false,m='';
+ if((d.t==='shade'||d.t==='multi'||d.t==='choice')&&R.s.size===0){G.msg='<div class="fb hint">Pilih jawabanmu dulu ya.</div>';return draw()}
+ if(d.t==='shade'){const n=R.s.size;ok=n===d.a*d.n/d.b;m=`Kamu mewarnai ${n} dari ${d.n} bagian. Bandingkan dengan batang contoh.`}
+ else if(d.t==='multi'){const cor=d.o.map((x,i)=>eq(x[0],x[1],d.a,d.b)?i:-1).filter(i=>i>=0);ok=cor.length===R.s.size&&cor.every(i=>R.s.has(i));m='Masih ada yang belum tepat. Ingat, pembilang dan penyebut harus dikali atau dibagi dengan bilangan yang sama.'}
+ else if(d.t==='fill'){const v=parseInt(R.v,10);if(isNaN(v)){G.msg='<div class="fb hint">Isi dulu angkanya.</div>';return draw()}ok=v===ans(d);m='Belum pas. Cari tahu pembilang atau penyebut awal dikali berapa.'}
+ else if(d.t==='choice'){ok=R.s.has(d.c);m='Cek lagi dengan menyederhanakan atau mengalikan pecahannya.'}
+ ok?win():bad(m)}
+function bad(m){G.w++;G.streak=0;snd('no');G.msg=`<div class="fb no">🤔 Belum tepat. ${m} Coba lagi, ya!</div>`;draw()}
+function ex(d){const R=G.R;
+ if(d.t==='shade')return `${f(d.a,d.b)} = ${f(d.a*d.n/d.b,d.n)}, karena pembilang dan penyebut sama-sama dikali ${d.n/d.b}.`;
+ if(d.t==='multi')return 'Yang senilai: '+d.o.filter(x=>eq(x[0],x[1],d.a,d.b)).map(x=>f(x[0],x[1])).join(', ')+`. Semuanya sama dengan ${f(d.a,d.b)}.`;
+ if(d.t==='fill'){const c=d.c==null?ans(d):d.c,e=d.d==null?ans(d):d.d,k=d.c==null?d.d/d.b:c/d.a;return `${f(d.a,d.b)} = ${f(c,e)}, karena pembilang dan penyebut sama-sama dikali ${k}.`}
+ if(d.t==='choice')return d.e;return ''}
+function win(t){const d=G.d,w=G.w;G.fin=true;snd('ok');
+ const pts=Math.max(3,10-3*w)-(G.h?2:0);let bonus=0;
+ if(w===0){G.streak++;G.maxStreak=Math.max(G.maxStreak,G.streak);if(G.streak>1)bonus=Math.min(G.streak-1,5)*2}else G.streak=0;
+ G.score+=pts+bonus;S.coin+=w===0?2:1;
+ G.msg=`<div class="fb ok">🎉 Benar! +${pts} poin${bonus?` +${bonus} bonus combo 🔥`:''}<br>${t||ex(d)}</div>`;draw()}
+function hnt(){if(G.fin)return;const d=G.d;G.h=true;let t='Kalikan atau bagi pembilang dan penyebut dengan bilangan yang sama.';
+ if(d.t==='shade')t=`1 bagian dari ${d.b} sama dengan ${d.n/d.b} bagian dari ${d.n}. Jadi ${d.a} bagian menjadi ${d.a*d.n/d.b} bagian.`;
+ else if(d.t==='fill')t=d.c==null?`Penyebut ${d.b} dikali ${d.d/d.b} menjadi ${d.d}. Pembilang ${d.a} juga dikali ${d.d/d.b}.`:`Pembilang ${d.a} dikali ${d.c/d.a} menjadi ${d.c}. Penyebut ${d.b} juga dikali ${d.c/d.a}.`;
+ else if(d.t==='choice'&&d.h)t=d.h;
+ else if(d.t==='match')t='Cari dua pecahan yang bagian berwarnanya sama banyak. Sederhanakan dulu jika perlu.';
+ else if(d.t==='group')t='Ubah setiap pecahan ke bentuk paling sederhana, lalu cocokkan dengan keranjang.';
+ G.msg=`<div class="fb hint">💡 ${t}</div>`;draw()}
+function next(){G.miss+=G.w;if(G.r+1<L[G.lv].r.length){G.r++;rnd()}else fin()}
+function fin(){const i=G.lv,stars=G.miss<=1?3:G.miss<=4?2:1;const old=S.st[i]||0;S.st[i]=Math.max(old,stars);S.u=Math.max(S.u,Math.min(10,i+2));
+ S.coin+=stars*3;S.best[i]=Math.max(S.best[i]||0,G.score);
+ const got=[],un=k=>{if(!S.ach[k]){S.ach[k]=1;got.push(ACH.find(a=>a[0]===k)[1])}};
+ un('first');if(stars===3)un('star3');if(G.maxStreak>=5)un('combo');if(S.coin>=50)un('coin');if(i===9)un('champ');
+ save();snd('win');
+ show(`<div class="card"><div class="big">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div><h2 style="text-align:center">Level ${i+1} selesai!</h2>
+ <p class="q" style="text-align:center">Skor: <b>${G.score}</b> (terbaik ${S.best[i]}) · Kesalahan: ${G.miss} · Koin: 🪙 ${S.coin}</p>
+ <p class="q" style="text-align:center">${stars===3?'Luar biasa, hampir tanpa salah!':stars===2?'Bagus sekali! Coba lagi untuk bintang penuh.':'Kamu sudah berusaha. Ulangi untuk mengasah pemahamanmu!'}</p>
+ ${got.length?`<p style="text-align:center">🎖️ Penghargaan baru: ${got.map(g=>`<span class="ach">${g}</span>`).join('')}</p>`:''}
+ <div style="text-align:center">${i<9?`<button class="btn g" onclick="intro(${i+1})">Level ${i+2} ➜</button>`:'<p class="q">🏆 Kamu menamatkan semua level. Selamat, Juara Pecahan!</p>'}<button class="btn" onclick="intro(${i})">↺ Ulangi</button><button class="btn b" onclick="map()">Peta</button></div></div>`)}
+home();
+</script></body></html>
